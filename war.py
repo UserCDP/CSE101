@@ -79,7 +79,9 @@ class CardGame:
 		st = ''
 		for player in self.players:
 			st += (str(player)) + '\n'
-		return st
+		return st.strip('\n')
 
 	def burn_card(self, card):
-		self.deck.cards.remove(card)
+		if card in self.deck.cards:
+			self.deck.cards.remove(card)
+			self.numcards -= 1

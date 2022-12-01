@@ -17,7 +17,7 @@ class GraphicalLife(tk.Frame):
 
     def create_widgets(self):
         # UNCOMMENT THE FOLLOWING LINE IN EXERCISE 5
-        #self.create_next_button()
+        self.create_next_button()
 
         # UNCOMMENT THE FOLLOWING LINE IN EXERCISE 9
         #self.create_save_button()

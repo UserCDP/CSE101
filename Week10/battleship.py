@@ -89,15 +89,11 @@ class Grid:
 			else:
 				positions.add((initial_x + k, initial_y))
 
-		return Ship(ship[0], positions)
+		self.add_ship(Ship(ship[0], positions))
 
 	def create_random(self, n):
-		if n == None:
-			n = 0
-		if n > 0:
-			for k in range(n):
-				#print ("AY")
-				self.add_ship(self.random_ship())
+		while len(self.ships) < n:
+				self.random_ship()
 
 
 # Exercise 6

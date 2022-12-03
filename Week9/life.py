@@ -89,4 +89,14 @@ def load_from_file(filename):
 
 # Exercise 8
 def is_periodic(board):
-    
+    variations = [board.alive_points]
+    for k in range (100):
+        board.next_step()
+        try:
+            k = variations.index(board.alive_points)
+            if k == 0:
+                return (True, 0)
+            else:
+                return (False, k)
+        except ValueError:
+            variations.append(board.alive_points)

@@ -18,7 +18,7 @@ class Vote:
             return ' > '.join(self.preference_list)
 
     def __repr__(self):
-        return 'Vote([' + ','.join(self.preference_list) + '])'
+        return f'Vote([{','.join(self.preference_list)}])'
 
     def first_preference(self):
         '''

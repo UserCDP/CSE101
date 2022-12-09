@@ -18,7 +18,7 @@ class Vote:
             return ' > '.join(self.preference_list)
 
     def __repr__(self):
-        return f'Vote([{','.join(self.preference_list)}])'
+        return 'Vote(' + str(self.preference_list) + ')'
 
     def first_preference(self):
         '''
@@ -27,6 +27,14 @@ class Vote:
         '''
         if len(self.preference_list) != 0:
             return self.preference_list[0]
+        return None
+
+    # Exercise 6
+    def preference(self, names):
+        """Return the first preference in a vote"""
+        for pref in self.preference_list:
+            if pref in names:
+                return pref
         return None
 
 class Election:
@@ -64,15 +72,23 @@ class Election:
         Convert each line of the file into a Vote,
         and append each of the votes to the correct pile.
         """
-        infile = open(filename, 'r')
+        infile = open(filename, 'r', encoding = "utf-8")
         for line in infile:
             if line[0] == '\n':
                 self.add_vote(Vote([]))
             else:
-                self.add_vote(Vote(line.strip('\n').split(' ')))
+                prefs = line.strip('\n').split(' ')
+                for preference in prefs:
+                    if preference not in self.parties:
+                        prefs.remove(preference)
+                self.add_vote(Vote(prefs))
 
-    # Exercise 4
-    def first_past_the_post_winner(self):
+# Exercise 4
+class FirstPastThePostElection(Election):
+    """
+    First-past-the-post elections: whoever gets the most first-preference votes wins.
+    """
+    def winner(self):
         """Return the winner of this election under
         the first-past-the-post system, or None if
         the election is tied.
@@ -92,23 +108,48 @@ class Election:
             return None
         return max_key
 
-    # Exercise 5
-    def weighted_status(self):
+# Exercise 5
+class WeightedElection(Election):
+    """
+    Weighted elections: each vote contributes to a party's total
+    according to that party's position among the vote's preferences.
+    """
+    def status(self):
         """Returns a dictionary with keys being the parties
         and values being the number of points (counted using
         the weighted scheme) that the party got.
         """
-        votes = self.status()
-        k = 0
-        print(self.piles)
-        for pile in self.piles.items():
-            votes[pile[0]] += 5 - k
-            k += 1
+        votes = {name: 0 for name in self.parties}
+        for value in self.piles.items():
+            for vote in value[1]:
+                k = 0
+                for choice in vote.preference_list:
+                    votes[choice] += 5 - k
+                    k += 1
         return votes
 
-    def weighted_winner(self):
+    def winner(self):
         """
         Return the winner of this election under
         the weighted voting scheme.
         """
-        return sorted(self.status().items())
+
+        return sorted(self.status().items(), key=lambda y: y[1], reverse=True)[0][0]
+
+# Exercise 7
+class PreferentialElection(Election):
+    """
+    Simple preferential/instant-runoff elections.
+    """
+
+    def __init__(self, parties):
+        super().__init__(parties)  # Initialize as for Elections
+        self.dead = []
+
+    def eliminate(self, party):
+        """Remove the given party from piles, and redistribute its
+        votes among the parties not yet eliminated, according to
+        their preferences.  If all preferences have been eliminated,
+        then add the vote to the dead list.
+        """
+        pass

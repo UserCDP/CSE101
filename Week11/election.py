@@ -152,4 +152,44 @@ class PreferentialElection(Election):
         their preferences.  If all preferences have been eliminated,
         then add the vote to the dead list.
         """
-        pass
+        votes_left = self.piles[party]
+        self.piles.pop(party)
+        for vote in votes_left:
+            ok = False
+            for choice in vote.preference_list:
+                if choice in self.piles and ok is False:
+                    self.piles[choice].append(vote)
+                    ok = True
+            if ok is False:
+                self.dead.append(vote)
+
+    def round_loser(self):
+        """Return the name of the party to be
+        eliminated from the next round."""
+        mini = min(self.status().items(), key=lambda y: y[1])[1]
+        #print(mini)
+        min_first_pref = 5000
+        true_loser = ''
+        for key, votes in self.piles.items():
+            if len(votes) == mini:
+                first_pref = 0
+                for vote in votes:
+                    if vote.preference_list[0] == key:
+                        first_pref += 1
+                if first_pref < min_first_pref:
+                    min_first_pref = first_pref
+                    true_loser = key
+
+        #print(true_loser)
+        return true_loser
+        #return sorted(self.status().items(), key=lambda y: y[1])[0][0]
+
+    def winner(self):
+        """Run a preferential election based on the current piles of votes,
+        and return the winning party.
+        """
+        while len(self.piles) > 1:
+            #print(self.status())
+            self.eliminate(self.round_loser())
+
+        return list(self.piles)[0]

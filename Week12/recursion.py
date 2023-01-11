@@ -18,7 +18,7 @@ def is_palindrome(word):
     if we have 2 letters left and they are the same return True
     if len > 2 then check the first and last letter, return False if different
     """
-    print (word)
+    #print (word)
     if len(word) <= 1:
         return True
     if word[0] != word[len(word)-1]:
@@ -57,6 +57,7 @@ def binary_search(sorted_list, lower, upper, element):
 
 # Optional for Exercise 4
 def binary_search_simple(sorted_list, element):
+    """call binary search without end and start arguments"""
     return binary_search(sorted_list, 0, len(sorted_list) - 1, element)
 
 # Exercise 5
@@ -80,20 +81,21 @@ def find_subsets(s):
 
 # Exercise 6
 def find_permutations(arr):
+    """find the permutations of a list of numbers"""
     result = []
-    #print(arr)
-    if len(arr) == 0 or len(arr) == 1:
-        return [arr]
-    for item in arr:
-        temp = arr.copy()
-        temp.remove(item)
-        remaining_perm = find_permutations(temp)
-        for p in remaining_perm:
-            result.append([item] + p)
+    if len(arr) == 0:
+        return [[]]
+    temp = arr.copy()
+    elem = temp.pop()
+    remaining_perm = find_permutations(temp)
+    for item in remaining_perm:
+        for i in range(len(arr)):
+            result.append(item[:i] + [elem] + item[i:])
     return result
 
 # Exercise 7
 def load_dictionary(filename):
+    """a function that loads the dictionary into a list"""
     with open(filename, 'r') as f:
         words = [line.strip() for line in f]
         return words
@@ -105,12 +107,14 @@ def find_acronyms(phrase, word_list):
     return find_acronyms_rec(phrase.split(), '', word_list)
 
 def find_acronyms_rec(phrase_words, prefix, word_list):
+    """find real acronyms of a set of wordss"""
     acronyms = set()
     if len(phrase_words) == 0:
         if binary_search_simple(word_list, prefix) != -1:
             return {prefix}
     else:
         for letter in phrase_words[0]:
-            acronyms = acronyms.union(find_acronyms_rec(phrase_words[1:], prefix + letter, word_list))
+            acronyms = acronyms.union(find_acronyms_rec(phrase_words[1:],
+                prefix + letter, word_list))
 
     return acronyms

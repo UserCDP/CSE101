@@ -130,9 +130,13 @@ class GameGrid:
         return self.square_at(i, j).mines_nearby
 
     # EXERCISE 3
-    #def flags_nearby(self, i, j):
-    #    """The number of flages near (i, j)."""
-
+    def flags_nearby(self, i, j):
+        """The number of flages near (i, j)."""
+        k = 0
+        for a,b in self.neighbors(i,j):
+            if self.square_at(a,b).flagged == True:
+                k += 1
+        return k
     #--------------------------------------------------------------------------
     # Function for changing the state of a square
 
@@ -151,24 +155,39 @@ class GameGrid:
         mines_nearby for all the neighbors
         """
         if self.square_at(i ,j).mined == False:
-            self.tab[i][j].mined = True
-        for i in self.square_at(i,j).neighbours:
-            if i.mined == False:
-                i += 1
-                self.nmines += 1
+            self.square_at(i,j).mined = True
+            self.nmines += 1
+            for a,b in self.neighbors(i,j):
+                self.square_at(a,b).mines_nearby += 1
 
     # EXERCISE 5
-    #def reveal(self, i, j):
-    #    """Reveal the square at (x,y);
-    #    if there are no mines nearby, reveals all the neighbors
-    #    """
+    def reveal(self, i, j):
+        """Reveal the square at (x,y);
+        if there are no mines nearby, reveals all the neighbors
+        """
+        sq = self.square_at(i,j)
+        if not sq.revealed and not sq.flagged:
+            sq.revealed = True
+            self.squares_revealed += 1
+
+            if not sq.mined and sq.mines_nearby == 0:
+                around = self.neighbors(i,j)
+                for a,b in around:
+                    self.reveal(a,b)
 
     # EXERCISE 6
-    #def chording(self, i, j):
-    #    """If the number of flags nearby does not coincide
-    #    with the number mines nearby, does nothing.
-    #    Otherwise, reveals all the non-flagged neighbors
-    #    """
+    def chording(self, i, j):
+        """If the number of flags nearby does not coincide
+        with the number mines nearby, does nothing.
+        Otherwise, reveals all the non-flagged neighbors
+        """
+        sq = self.square_at(i,j)
+        if self.flags_nearby(i,j) == self.mines_nearby(i,j):
+            around = self.neighbors(i,j)
+            for a,b in around:
+                self.reveal(a,b)
+                if self.square_at(a,b).flagged == False:
+                    self.square_at(a,b).revealed = True
 
     def remove_flag(self, i, j):
         """If there is flag at (i,j) then remove it,
@@ -182,11 +201,19 @@ class GameGrid:
     # Methods acting on the whole board
 
     # EXERCISE 4
-    #def random_game(self, n_mines):
-    #    """Reset the game grid and place n_mines random mines."""
-    #    if n_mines <= 0 or n_mines >= self.nrows*self.ncols:
-    #        raise Exception(f'Invalid number of mines ({n_mines}).')
-    #    self.reset()
+    def random_game(self, n_mines):
+        """Reset the game grid and place n_mines random mines."""
+        if n_mines <= 0 or n_mines >= self.nrows*self.ncols:
+            raise Exception(f'Invalid number of mines ({n_mines}).')
+        self.reset()
+        positions = []
+        while (len(positions) < n_mines):
+            p = (random.randint(0, self.nrows-1), random.randint(0, self.ncols-1))
+            if p not in positions:
+                positions.append(p)
+
+        for i,j in positions:
+            self.place_mine(i,j)
 
     def game_won(self):
         """True iff the game has been won:
@@ -349,12 +376,16 @@ class MinesweeperApp:
         return cell_button
 
     # EXERCISE 7
-    #def update_mine_counter(self):
-    #    """Updates mine counter and schedules the next update in 100 ms"""
+    def update_mine_counter(self):
+        """Updates mine counter and schedules the next update in 100 ms"""
+        self.mine_counter_str.set(f"{self.game.nmines - self.game.nflags}")
+        self.top_frame.after(100, self.update_mine_counter)
 
     # EXERCISE 8
-    #def update_time_counter(self):
-    #    """Updated the time counter and schedules the next update in 100ms"""
+    def update_time_counter(self):
+        """Updated the time counter and schedules the next update in 100ms"""
+        self.time_counter_str.set(f"{self.game_time()}")
+        self.top_frame.after(100, self.update_time_counter)
 
     def draw_cell(self, i, j):
         """Draws the cell with coordinates (i, j)"""
@@ -420,24 +451,42 @@ class MinesweeperApp:
             self.root.destroy()
 
     # EXERCISE 9
-    #def left_click_handler(self, i, j):
-    #    """To be called when there is a left-click on the cell at (i, j).
-    #    The left mouse button reveals cells, so this method
-    #    - If (i, j) is revealed, then chording is performed
-    #    - If (i, j) is flagged, then nothing happens
-    #    - If (i,j) is not revealed and not flagged, and reveals (i,j).
-    #    Note that the board should be redrawn
-    #    """
-    #    if not self.started:
-    #        self.t_0 = time.time()
-    #        self.started = True
+    def left_click_handler(self, i, j):
+        """To be called when there is a left-click on the cell at (i, j).
+        The left mouse button reveals cells, so this method
+        - If (i, j) is revealed, then chording is performed
+        - If (i, j) is flagged, then nothing happens
+        - If (i,j) is not revealed and not flagged, and reveals (i,j).
+        Note that the board should be redrawn
+        """
+        if not self.started:
+            self.t_0 = time.time()
+            self.started = True
+        sq = self.game.square_at(i,j)
+        if not sq.flagged:
+            if sq.mined:
+                self.draw_cell(i,j)
+                self.game_over(False)
+            if sq.revealed == True:
+                self.game.chording(i,j)
+            else:
+                self.game.reveal(i,j)
+        if (self.game.nrows * self.game.ncols - self.game.squares_revealed) == self.game.nmines:
+            self.game_over(True)
+        self.draw_board()
 
     # EXERCISE 10
-    #def right_click_handler(self, i, j):
-    #    """To be called when there is a right-click on the cell at (i, j).
-    #    The right mouse button controls marker flags, so this method
-    #    - Does nothing if (i, j) has already been revealed
-    #    - Sets a flag at non-revealed (i, j) if it has no flag
-    #    - Removes the flag at non-revealed (i, j) if it already has a flag
-    #    """
-
+    def right_click_handler(self, i, j):
+        """To be called when there is a right-click on the cell at (i, j).
+        The right mouse button controls marker flags, so this method
+        - Does nothing if (i, j) has already been revealed
+        - Sets a flag at non-revealed (i, j) if it has no flag
+        - Removes the flag at non-revealed (i, j) if it already has a flag
+        """
+        sq = self.game.square_at(i,j)
+        if not sq.revealed:
+            if not sq.flagged:
+                self.game.place_flag(i,j)
+            else:
+                self.game.remove_flag(i,j)
+        self.draw_cell(i,j)
